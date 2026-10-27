@@ -2,28 +2,74 @@
 // Sistema de RH
 
 #include <stdio.h>
+#include <stdlib.h> // Necessário para usar malloc e NULL
+#include <string.h> // Necessário para usar strcpy
 
-struct Funcionario {
+typedef struct Funcionario {
     char Nome[50];
     char Funcao[50];
     char Celular[25];
     char E_mail[50];
     float Piso_salarial;
     int Num_registro;
-};
+
+    struct Funcionario *prox;
+} Funcionario;
+
+// Função para inserir um novo funcionário no início da lista (LIFO / Pilha)
+void inserirIni(Funcionario **prim, char nome[], char funcao[], char celular[],
+        char e_mail[], float piso_salarial, int num_registro) {
+     
+    // Aloca dinamicamente memória para um novo nó do tipo Funcionario
+    Funcionario *novo = (Funcionario *) malloc(sizeof(Funcionario));              
+
+    if (novo == NULL) {
+        printf("============================================\n");
+        printf("          REGISTRO DE FUNCIONÁRIOS          \n");
+        printf("============================================\n\n");
+        
+        printf("Erro: Memória insuficiente no sistema!\n");
+        printf("Não foi possível alocar espaço para o novo funcionário.\n\n");
+        printf("Pressione [Enter] para retornar ao Menu Principal...");
+        getchar();
+        return;
+    }
+
+    // Preenche os campos do novo funcionário com os valores recebidos
+    strcpy(novo->Nome, nome);
+    strcpy(novo->Funcao, funcao);
+    strcpy(novo->Celular, celular);
+    strcpy(novo->E_mail, e_mail);
+    novo->Piso_salarial = piso_salarial;
+    novo->Num_registro = num_registro;
+
+    // O novo nó aponta para quem era o primeiro anteriormente
+    novo->prox = *prim;
+
+    // O ponteiro principal (prim) passa a apontar para o novo nó
+    *prim = novo;
+
+    // Exibe as informações cadastradas com sucesso
+    printf("=== Funcionário Cadastrado com Sucesso! ===\n\n");
+    printf("Funcionário: %s\n", novo->Nome);
+    printf("Função: %s\n", novo->Funcao);
+    printf("Contato: %s\n", novo->Celular);
+    printf("E-mail: %s\n", novo->E_mail);
+    printf("Piso salarial: R$ %.2f\n", novo->Piso_salarial);
+    printf("ID: %d\n\n", novo->Num_registro);
+}
 
 int main()
 {
     int opcao;
-    int total_funcionarios = 0;
     int c; // Variável auxiliar para limpar o buffer
+    int contador_id = 1; // Controla a geração sequencial dos IDs
 
-    struct Funcionario funcionarios[100];
+    Funcionario *prim = NULL; // Ponteiro âncora que aponta para o primeiro funcionário (começa vazio)
 
     do {
-        // 10 linhas antes de escrever!
         printf("============================================\n");
-        printf("          SISTEMA DE FUNCIONÁRIOS           \n");
+        printf("           SISTEMA DE FUNCIONÁRIOS          \n");
         printf("============================================\n\n");
 
         printf("[1] - Registro de funcionários\n");
@@ -43,101 +89,73 @@ int main()
             printf("Escolha uma opção válida\n\n");
         } 
 
+        // OPÇÃO 1: Cadastro dinâmico de funcionários
         if(opcao == 1) {
-            // 1. Verifica se o limite já foi atingido antes de qualquer coisa
-            if (total_funcionarios >= 100) {
+            int continuar_cadastro;
+
+            do {
+                char nome_temp[50];
+                char funcao_temp[50];
+                char celular_temp[25];
+                char e_mail_temp[50];
+                float piso_temp;
+
                 printf("============================================\n");
-                printf("         REGISTRO DE FUNCIONÁRIOS           \n");
+                printf("          REGISTRO DE FUNCIONÁRIOS          \n");
                 printf("============================================\n\n");
 
-                printf("Erro: Capacidade máxima de cadastro atingida (100 funcionarios)\n");
-                printf("Não é possível adicionar novos registros no momento!\n\n");
-        
-                printf("Pressione [Enter] para voltar ao Menu Principal...");
-                getchar(); // Pausa para o usuário ler
+                // Recebe informações temporárias do Funcionário
+                printf("Digite seu nome:\n");
+                scanf(" %49[^\n]", nome_temp);
+                printf("\n");
 
-            } else {
-                // 2. Se tiver vaga, o do...while fica PROTEGIDO dentro do else!
-                int continuar_cadastro;
+                printf("Digite sua função:\n");
+                scanf(" %49[^\n]", funcao_temp);
+                printf("\n");
 
-                do {
-                    // 10 linhas antes de escrever!
-                    printf("============================================\n");
-                    printf("          REGISTRO DE FUNCIONÁRIOS          \n");
-                    printf("============================================\n\n");
+                printf("Digite seu número de celular:\n");
+                scanf(" %24[^\n]", celular_temp);
+                printf("\n");
 
-                    // Recebe informações do Funcionário
-                    printf("Digite seu nome:\n");
-                    scanf(" %49[^\n]", funcionarios[total_funcionarios].Nome);
-                    printf("\n");
+                printf("Digite seu E-mail:\n");
+                scanf(" %49[^\n]", e_mail_temp);
+                printf("\n");
 
-                    printf("Digite sua função:\n");
-                    scanf(" %49[^\n]", funcionarios[total_funcionarios].Funcao);
-                    printf("\n");
+                printf("Digite seu Piso salarial:\n");
+                scanf(" %f", &piso_temp);
 
-                    printf("Digite seu número de celular:\n");
-                    scanf(" %24[^\n]", funcionarios[total_funcionarios].Celular);
-                    printf("\n");
+                // Limpa o buffer após o scanf do float
+                while((c = getchar()) != '\n' && c != EOF);  
+                printf("\n");      
 
-                    printf("Digite seu E-mail:\n");
-                    scanf(" %49[^\n]", funcionarios[total_funcionarios].E_mail);
-                    printf("\n");
+                // Chama a função que aloca dinamicamente e insere no início da lista
+                inserirIni(&prim, nome_temp, funcao_temp, celular_temp, e_mail_temp, piso_temp, contador_id);
 
-                    printf("Digite seu Piso salarial:\n");
-                    scanf(" %f", &funcionarios[total_funcionarios].Piso_salarial);
+                // Incrementa o ID para o próximo cadastro
+                contador_id++;
 
-                    // Limpa o buffer após o scanf do float
-                    while((c = getchar()) != '\n' && c != EOF);  
-                    printf("\n");      
+                // Pergunta se deseja cadastrar outro funcionário
+                printf("Deseja registrar outro funcionário?\n\n");
+                printf("[1] - Sim\n");
+                printf("[2] - Voltar ao Menu Principal\n\n");
 
-                    // Criação automática do número de registro
-                    funcionarios[total_funcionarios].Num_registro = total_funcionarios + 1;
-
-                    // Devolve as informações
-                    printf("Funcionário: %s\n", funcionarios[total_funcionarios].Nome);
-                    printf("Função: %s\n", funcionarios[total_funcionarios].Funcao);
-                    printf("Contato: %s\n", funcionarios[total_funcionarios].Celular);
-                    printf("E-mail: %s\n", funcionarios[total_funcionarios].E_mail);
-                    printf("Piso salarial: R$ %.2f\n", funcionarios[total_funcionarios].Piso_salarial);
-                    printf("ID: %d\n\n", funcionarios[total_funcionarios].Num_registro);    
-
-                    // Avança para próxima posição do array!
-                    total_funcionarios += 1;    
-
-                    // ATENÇÃO: Se o usuário atingiu o 100º cadastro agora, 
-                    // barramos antes de perguntar se ele quer continuar cadastrando.
-                    if (total_funcionarios >= 100) {
-                        printf("Limite de 100 funcionários atingido com este último cadastro!\n");
-                        printf("Retornando ao Menu Principal...\n\n");
-                    
-                        printf("Pressione [Enter] para continuar...");
-                        getchar();
-                        break; // Encerra o do-while imediatamente!
-                    }
-
-                    // Pergunta se deseja cadastrar outro funcionário
-                    printf("Deseja registrar outro funcionário?\n\n");
-                    printf("[1] - Sim\n");
-                    printf("[2] - Voltar ao Menu Principal\n\n");
-
-                    scanf("%d", &continuar_cadastro);
-                    while((c = getchar()) != '\n' && c != EOF); // Limpa o buffer
-                    printf("\n");
-                    
-                } while(continuar_cadastro == 1);
-            }
+                scanf("%d", &continuar_cadastro);
+                while((c = getchar()) != '\n' && c != EOF); // Limpa o buffer
+                printf("\n");
+                
+            } while(continuar_cadastro == 1);
         }
 
+        // OPÇÃO 2: Consulta de registros utilizando a lista encadeada e ponteiro aux
         if(opcao == 2) {
             int sub_opcao; // Variável para o sub-menu
 
-            // 10 linhas antes de escrever!
             printf("=========================================\n");
             printf("           CONSULTA DE REGISTROS         \n");
             printf("=========================================\n\n");
 
             printf("[1] - Buscar por registro único (ID)\n");
-            printf("[2] - Ver todos os registro\n\n");
+            printf("[2] - Ver todos os registros\n\n");
 
             printf("Escolha uma opção:\n\n");
             scanf("%d", &sub_opcao);
@@ -146,58 +164,57 @@ int main()
 
             // Caminho 1: Busca por ID único
             if(sub_opcao == 1) {
-                int i;
-                int Buscar_id; // Variável para encontrar a ID específica
-                int encontrado = 0; // Flag!
+                int buscar_id; 
+                int encontrado = 0; // Flag
 
                 printf("Digite a ID solicitada:\n");
-                scanf("%d", &Buscar_id);
+                scanf("%d", &buscar_id);
                 while((c = getchar()) != '\n' && c != EOF); // Limpa o buffer
                 printf("\n");
 
-                // O laço varre o array do 0 até o total 
-                // de funcionários cadastrados
-                for(i = 0; i < total_funcionarios; i++ ) {
+                // Ponteiro auxiliar para percorrer a lista sem perder a âncora 'prim'
+                Funcionario *aux = prim;
 
-                    // Se o ID digitado bater com o ID da posição 'i' do array...
-                    if(Buscar_id == funcionarios[i].Num_registro) {
-                        // Flag de encontrado!
+                while(aux != NULL) {
+                    if(buscar_id == aux->Num_registro) {
                         encontrado = 1;
 
                         printf("=== Funcionário Encontrado ===\n\n");
-                        printf("Número de registro: %d\n", funcionarios[i].Num_registro);
-                        printf("Funcionário: %s\n", funcionarios[i].Nome);
-                        printf("Função: %s\n", funcionarios[i].Funcao);
-                        printf("Piso salarial: R$ %.2f\n", funcionarios[i].Piso_salarial);
-                        printf("Contatos: %s, %s\n\n", funcionarios[i].Celular, funcionarios[i].E_mail);
+                        printf("Número de registro: %d\n", aux->Num_registro);
+                        printf("Funcionário: %s\n", aux->Nome);
+                        printf("Função: %s\n", aux->Funcao);
+                        printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
+                        printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
 
-                        break; // Para de procurar, ID úico encontrado!
-                    } 
+                        break; // ID único encontrado, encerra a busca
+                    }
+                    aux = aux->prox; // Avança para o próximo nó da lista
                 }
-                // Se o laço acabou e Flag continuou em 0, o ID não existe
+
                 if(encontrado == 0) {
-                    printf("Erro: Nenhum funcionário encontrado com a ID %d.\n\n", Buscar_id);
+                    printf("Erro: Nenhum funcionário encontrado com a ID %d.\n\n", buscar_id);
                 }
 
                 printf("Pressione [Enter] para voltar ao Menu Principal...");
                 getchar();
                 printf("\n\n");
-
             }
             // Caminho 2: Ver todos os registros
             else if(sub_opcao == 2) {
-
-                if(total_funcionarios == 0) {
+                if(prim == NULL) {
                     printf("Nenhum funcionário cadastrado!\n\n");
-
                 } else {
-                    int i;
-                    for(i = 0; i < total_funcionarios; i++) {
-                        printf("Número de registro: %d\n", funcionarios[i].Num_registro);
-                        printf("Funcionário: %s\n", funcionarios[i].Nome);
-                        printf("Função: %s\n", funcionarios[i].Funcao);    
-                        printf("Piso salarial: R$ %.2f\n", funcionarios[i].Piso_salarial);
-                        printf("Contatos: %s, %s\n\n", funcionarios[i].Celular, funcionarios[i].E_mail);
+                    // Ponteiro auxiliar para percorrer a lista do início ao fim
+                    Funcionario *aux = prim;
+
+                    while(aux != NULL) {
+                        printf("Número de registro: %d\n", aux->Num_registro);
+                        printf("Funcionário: %s\n", aux->Nome);
+                        printf("Função: %s\n", aux->Funcao);    
+                        printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
+                        printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
+
+                        aux = aux->prox; // Salta para o próximo nó
                     }
                 }
 
