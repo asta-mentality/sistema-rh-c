@@ -5,16 +5,22 @@
 #include <stdlib.h> // Necessário para usar malloc, free e NULL
 #include <string.h> // Necessário para usar strcpy
 
+// Estrutura para gerenciar os cargos e pisos salariais da empresa (Normalização de dados)
+typedef struct Cargo {
+    char Nome_cargo[50];
+    float Piso_salarial;
+    struct Cargo *prox;
+} Cargo;
+
 typedef struct Funcionario {
     char Nome[50];
     char Funcao[50];
     char Celular[25];
     char E_mail[50];
-    float Piso_salarial;
     int Num_registro;
 
     // Campos limpos para a Folha de Pagamentos
-    int Tempo_casa;   // Tempo de empresa contando em meses (inicia em 0)
+    int Tempo_casa;       // Tempo de empresa contando em meses (inicia em 0)
     float Horas_extras;   // Banco de horas extras realizadas no mês
 
     struct Funcionario *prox;
@@ -22,7 +28,7 @@ typedef struct Funcionario {
 
 // Função para inserir um novo funcionário no início da lista (LIFO / Pilha)
 void inserirIni(Funcionario **prim, char nome[], char funcao[], char celular[],
-        char e_mail[], float piso_salarial, int num_registro) {
+        char e_mail[], int num_registro) {
      
     Funcionario *novo = (Funcionario *) malloc(sizeof(Funcionario));             
 
@@ -41,7 +47,6 @@ void inserirIni(Funcionario **prim, char nome[], char funcao[], char celular[],
     strcpy(novo->Funcao, funcao);
     strcpy(novo->Celular, celular);
     strcpy(novo->E_mail, e_mail);
-    novo->Piso_salarial = piso_salarial;
     novo->Num_registro = num_registro;
 
     // Inicializando os novos campos da Folha
@@ -56,7 +61,6 @@ void inserirIni(Funcionario **prim, char nome[], char funcao[], char celular[],
     printf("Função: %s\n", novo->Funcao);
     printf("Contato: %s\n", novo->Celular);
     printf("E-mail: %s\n", novo->E_mail);
-    printf("Piso salarial: R$ %.2f\n", novo->Piso_salarial);
     printf("ID: %d\n\n", novo->Num_registro);
 }
 
@@ -95,13 +99,69 @@ void removerFuncionario(Funcionario **prim, int id_busca) {
     printf("=== Funcionário removido com sucesso e memória liberada! ===\n\n");
 }
 
+// Função para inserir um novo cargo no início da lista de Configurações
+void inserirCargo(Cargo **prim, char nome_cargo[], float piso_salarial) {
+    Cargo *novo = (Cargo *) malloc(sizeof(Cargo));
+
+    if (novo == NULL) {
+        printf("Erro: Memória insuficiente no sistema!\n\n");
+        return;
+    }
+
+    strcpy(novo->Nome_cargo, nome_cargo);
+    novo->Piso_salarial = piso_salarial;
+
+    novo->prox = *prim;
+    *prim = novo;
+
+    printf("=== Cargo Cadastrado com Sucesso! ===\n\n");
+    printf("Cargo: %s\n", novo->Nome_cargo);
+    printf("Piso Salarial: R$ %.2f\n\n", novo->Piso_salarial);
+}
+
+// Função para remover um cargo pelo nome e liberar a memória RAM com free()
+void removerCargo(Cargo **prim, char nome_busca[]) {
+    if (*prim == NULL) {
+        printf("Erro: A lista de cargos está vazia!\n\n");
+        return;
+    }
+
+    Cargo *aux = *prim;
+    Cargo *ant = NULL;
+
+    // Se o cargo a ser removido é o primeiro da lista (cabeça)
+    if (strcmp(aux->Nome_cargo, nome_busca) == 0) {
+        *prim = aux->prox;
+        free(aux);
+        printf("=== Cargo removido com sucesso e memória liberada! ===\n\n");
+        return;
+    }
+
+    // Percorre a lista mantendo o rastro do elemento anterior
+    while (aux != NULL && strcmp(aux->Nome_cargo, nome_busca) != 0) {
+        ant = aux;
+        aux = aux->prox;
+    }
+
+    if (aux == NULL) {
+        printf("Erro: Nenhum cargo encontrado com o nome '%s'.\n\n", nome_busca);
+        return;
+    }
+
+    // Isola o nó atual e libera a memória
+    ant->prox = aux->prox;
+    free(aux);
+    printf("=== Cargo removido com sucesso e memória liberada! ===\n\n");
+}
+
 int main()
 {
     int opcao;
     int c; // Variável auxiliar para limpar o buffer
     int contador_id = 1; // Controla a geração sequencial e perpétua dos IDs
 
-    Funcionario *prim = NULL; // Ponteiro âncora
+    Funcionario *prim = NULL; // Ponteiro âncora para funcionários
+    Cargo *prim_cargo = NULL; // Ponteiro âncora para cargos
 
     do {
         printf("============================================\n");
@@ -111,7 +171,8 @@ int main()
         printf("[1] - Registro de funcionários\n");
         printf("[2] - Consulta e Gestão de registros\n");
         printf("[3] - Folha de pagamento\n");
-        printf("[4] - Encerrar programa\n\n");
+        printf("[4] - Configurações do Sistema\n");
+        printf("[5] - Encerrar programa\n\n");
 
         printf("Escolha uma opção:\n\n");
         
@@ -124,7 +185,7 @@ int main()
         }
         printf("\n");
 
-        if(opcao < 1 || opcao > 4) {
+        if(opcao < 1 || opcao > 5) {
             printf("Escolha uma opção válida\n\n");
         }
 
@@ -137,7 +198,6 @@ int main()
                 char funcao_temp[50];
                 char celular_temp[25];
                 char e_mail_temp[50];
-                float piso_temp;
 
                 printf("============================================\n");
                 printf("          REGISTRO DE FUNCIONÁRIOS          \n");
@@ -159,13 +219,7 @@ int main()
                 scanf(" %49[^\n]", e_mail_temp);
                 printf("\n");
 
-                printf("Digite seu Piso salarial:\n");
-                scanf(" %f", &piso_temp);
-
-                while((c = getchar()) != '\n' && c != EOF);  
-                printf("\n");      
-
-                inserirIni(&prim, nome_temp, funcao_temp, celular_temp, e_mail_temp, piso_temp, contador_id);
+                inserirIni(&prim, nome_temp, funcao_temp, celular_temp, e_mail_temp, contador_id);
 
                 contador_id++; // O ID sempre avança, garantindo coerência diária
 
@@ -238,7 +292,6 @@ int main()
                                 printf("Número de registro: %d\n", aux->Num_registro);
                                 printf("Funcionário: %s\n", aux->Nome);
                                 printf("Função: %s\n", aux->Funcao);
-                                printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
                                 printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
 
                                 break; 
@@ -265,7 +318,6 @@ int main()
                                 printf("Número de registro: %d\n", aux->Num_registro);
                                 printf("Funcionário: %s\n", aux->Nome);
                                 printf("Função: %s\n", aux->Funcao);    
-                                printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
                                 printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
 
                                 aux = aux->prox;
@@ -321,11 +373,6 @@ int main()
 
                                         printf("Digite o novo E-mail:\n");
                                         scanf(" %49[^\n]", aux->E_mail);
-                                        printf("\n");
-
-                                        printf("Digite o novo Piso salarial:\n");
-                                        scanf(" %f", &aux->Piso_salarial);
-                                        while((c = getchar()) != '\n' && c != EOF);
                                         printf("\n");
 
                                         printf("=== Dados atualizados com sucesso! ===\n\n");
@@ -444,12 +491,165 @@ int main()
             } while (sub_opcao != 0);
         }
 
-        // Opção 4: Encerrar programa
+        // Opção 4: Configurações do Sistema (CRUD de Cargos)
         if(opcao == 4) {
+            int sub_opcao_cargo;
+
+            do {
+                printf("=========================================\n");
+                printf("         CONFIGURAÇÕES DO SISTEMA        \n");
+                printf("=========================================\n\n");
+
+                printf("[1] - Cadastrar novo cargo\n");
+                printf("[2] - Ver todos os cargos\n");
+                printf("[3] - Atualizar piso de um cargo\n");
+                printf("[4] - Remover um cargo\n");
+                printf("[0] - Voltar ao Menu Principal\n\n");
+
+                printf("Escolha uma opção:\n\n");
+                
+                // Blindagem contra letras no sub-menu de cargos
+                if (scanf("%d", &sub_opcao_cargo) != 1) {
+                    while ((c = getchar()) != '\n' && c != EOF);
+                    sub_opcao_cargo = -1;
+                } else {
+                    while ((c = getchar()) != '\n' && c != EOF);
+                }
+                printf("\n");
+
+                if (sub_opcao_cargo == 0) {
+                    printf("Retornando ao Menu Principal...\n\n");
+                    break;
+                } else if(sub_opcao_cargo < 1 || sub_opcao_cargo > 4) {
+                    printf("Escolha uma opção válida\n\n");
+                } else {
+                    // Sub-opção 1: Cadastrar novo cargo
+                    if(sub_opcao_cargo == 1) {
+                        char nome_cargo_temp[50];
+                        float piso_cargo_temp;
+
+                        printf("=========================================\n");
+                        printf("            CADASTRAR NOVO CARGO         \n");
+                        printf("=========================================\n\n");
+
+                        printf("Digite o nome do cargo:\n");
+                        scanf(" %49[^\n]", nome_cargo_temp);
+                        printf("\n");
+
+                        printf("Digite o piso salarial do cargo:\n");
+                        scanf(" %f", &piso_cargo_temp);
+                        while((c = getchar()) != '\n' && c != EOF);
+                        printf("\n");
+
+                        inserirCargo(&prim_cargo, nome_cargo_temp, piso_cargo_temp);
+
+                        printf("Pressione [Enter] para continuar...");
+                        getchar();
+                        printf("\n\n");
+                    }
+                    // Sub-opção 2: Ver todos os cargos
+                    else if(sub_opcao_cargo == 2) {
+                        if(prim_cargo == NULL) {
+                            printf("Nenhum cargo cadastrado!\n\n");
+                        } else {
+                            Cargo *aux = prim_cargo;
+
+                            while(aux != NULL) {
+                                printf("Cargo: %s\n", aux->Nome_cargo);
+                                printf("Piso salarial: R$ %.2f\n\n", aux->Piso_salarial);
+
+                                aux = aux->prox;
+                            }
+                        }
+
+                        printf("Pressione [Enter] para continuar...");
+                        getchar();
+                        printf("\n\n");
+                    }
+                    // Sub-opção 3: Atualizar piso de um cargo
+                    else if(sub_opcao_cargo == 3) {
+                        if(prim_cargo == NULL) {
+                            printf("Erro: Nenhum cargo cadastrado para atualizar!\n\n");
+                            printf("Pressione [Enter] para continuar...");
+                            getchar();
+                            printf("\n\n");
+                        } else {
+                            char nome_busca[50];
+                            int encontrado = 0;
+
+                            printf("=========================================\n");
+                            printf("          ATUALIZAR PISO DE CARGO        \n");
+                            printf("=========================================\n\n");
+
+                            printf("Digite o nome do cargo que deseja atualizar:\n");
+                            scanf(" %49[^\n]", nome_busca);
+                            while((c = getchar()) != '\n' && c != EOF);
+                            printf("\n");
+
+                            Cargo *aux = prim_cargo;
+                            while(aux != NULL) {
+                                if(strcmp(aux->Nome_cargo, nome_busca) == 0) {
+                                    encontrado = 1;
+
+                                    printf("Cargo encontrado: %s\n", aux->Nome_cargo);
+                                    printf("Piso atual: R$ %.2f\n\n", aux->Piso_salarial);
+
+                                    printf("Digite o novo piso salarial:\n");
+                                    scanf(" %f", &aux->Piso_salarial);
+                                    while((c = getchar()) != '\n' && c != EOF);
+                                    printf("\n");
+
+                                    printf("=== Piso salarial atualizado com sucesso! ===\n\n");
+                                    break;
+                                }
+                                aux = aux->prox;
+                            }
+
+                            if(encontrado == 0) {
+                                printf("Erro: Nenhum cargo encontrado com o nome '%s'.\n\n", nome_busca);
+                            }
+
+                            printf("Pressione [Enter] para continuar...");
+                            getchar();
+                            printf("\n\n");
+                        }
+                    }
+                    // Sub-opção 4: Remover um cargo
+                    else if(sub_opcao_cargo == 4) {
+                        if(prim_cargo == NULL) {
+                            printf("Erro: Nenhum cargo cadastrado para remover!\n\n");
+                            printf("Pressione [Enter] para continuar...");
+                            getchar();
+                            printf("\n\n");
+                        } else {
+                            char nome_busca[50];
+
+                            printf("=========================================\n");
+                            printf("              REMOVER CARGO              \n");
+                            printf("=========================================\n\n");
+
+                            printf("Digite o nome do cargo que deseja remover:\n");
+                            scanf(" %49[^\n]", nome_busca);
+                            while((c = getchar()) != '\n' && c != EOF);
+                            printf("\n");
+
+                            removerCargo(&prim_cargo, nome_busca);
+
+                            printf("Pressione [Enter] para continuar...");
+                            getchar();
+                            printf("\n\n");
+                        }
+                    }
+                }
+            } while (sub_opcao_cargo != 0);
+        }
+
+        // Opção 5: Encerrar programa
+        if(opcao == 5) {
             printf("Encerrando o Sistema de RH. Até logo!\n\n");
         }
 
-    } while(opcao != 4);
+    } while(opcao != 5);
 
     return 0;
 }
