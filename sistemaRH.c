@@ -13,6 +13,10 @@ typedef struct Funcionario {
     float Piso_salarial;
     int Num_registro;
 
+    // Campos limpos para a Folha de Pagamentos
+    int Tempo_casa;   // Tempo de empresa contando em meses (inicia em 0)
+    float Horas_extras;   // Banco de horas extras realizadas no mês
+
     struct Funcionario *prox;
 } Funcionario;
 
@@ -20,11 +24,11 @@ typedef struct Funcionario {
 void inserirIni(Funcionario **prim, char nome[], char funcao[], char celular[],
         char e_mail[], float piso_salarial, int num_registro) {
      
-    Funcionario *novo = (Funcionario *) malloc(sizeof(Funcionario));              
+    Funcionario *novo = (Funcionario *) malloc(sizeof(Funcionario));             
 
     if (novo == NULL) {
         printf("============================================\n");
-        printf("          REGISTRO DE FUNCIONÁRIOS          \n");
+        printf("            REGISTRO DE FUNCIONÁRIOS        \n");
         printf("============================================\n\n");
         printf("Erro: Memória insuficiente no sistema!\n");
         printf("Não foi possível alocar espaço para o novo funcionário.\n\n");
@@ -39,6 +43,10 @@ void inserirIni(Funcionario **prim, char nome[], char funcao[], char celular[],
     strcpy(novo->E_mail, e_mail);
     novo->Piso_salarial = piso_salarial;
     novo->Num_registro = num_registro;
+
+    // Inicializando os novos campos da Folha
+    novo->Tempo_casa = 0;
+    novo->Horas_extras = 0.0f;
 
     novo->prox = *prim;
     *prim = novo;
@@ -97,7 +105,7 @@ int main()
 
     do {
         printf("============================================\n");
-        printf("           SISTEMA DE FUNCIONÁRIOS          \n");
+        printf("          SISTEMA DE FUNCIONÁRIOS           \n");
         printf("============================================\n\n");
 
         printf("[1] - Registro de funcionários\n");
@@ -106,9 +114,14 @@ int main()
         printf("[4] - Encerrar programa\n\n");
 
         printf("Escolha uma opção:\n\n");
-        scanf("%d", &opcao);
-
-        while((c = getchar()) != '\n' && c != EOF);
+        
+        // Blindagem do menu principal contra letras
+        if (scanf("%d", &opcao) != 1) {
+            while ((c = getchar()) != '\n' && c != EOF);
+            opcao = -1; // Força a cair na validação de opção inválida
+        } else {
+            while ((c = getchar()) != '\n' && c != EOF);
+        }
         printf("\n");
 
         if(opcao < 1 || opcao > 4) {
@@ -160,8 +173,13 @@ int main()
                 printf("[1] - Sim\n");
                 printf("[2] - Voltar ao Menu Principal\n\n");
 
-                scanf("%d", &continuar_cadastro);
-                while((c = getchar()) != '\n' && c != EOF);
+                // Blindagem da sub-opção de continuar
+                if (scanf("%d", &continuar_cadastro) != 1) {
+                    while ((c = getchar()) != '\n' && c != EOF);
+                    continuar_cadastro = -1;
+                } else {
+                    while ((c = getchar()) != '\n' && c != EOF);
+                }
                 printf("\n");
                 
             } while(continuar_cadastro == 1);
@@ -171,191 +189,264 @@ int main()
         if(opcao == 2) {
             int sub_opcao; 
 
-            printf("=========================================\n");
-            printf("       CONSULTA E GESTÃO DE REGISTROS    \n");
-            printf("=========================================\n\n");
+            do {
+                printf("=========================================\n");
+                printf("      CONSULTA E GESTÃO DE REGISTROS     \n");
+                printf("=========================================\n\n");
 
-            printf("[1] - Buscar por registro único (ID)\n");
-            printf("[2] - Ver todos os registros\n");
-            printf("[3] - Atualizar um registro\n");
-            printf("[4] - Remover um registro\n\n");
+                printf("[1] - Buscar por registro único (ID)\n");
+                printf("[2] - Ver todos os registros\n");
+                printf("[3] - Atualizar um registro\n");
+                printf("[4] - Remover um registro\n");
+                printf("[0] - Voltar ao Menu Principal\n\n");
 
-            printf("Escolha uma opção:\n\n");
-            scanf("%d", &sub_opcao);
-            while((c = getchar()) != '\n' && c != EOF);
-            printf("\n");
-
-            // Validação de segurança para o sub-menu
-            if(sub_opcao < 1 || sub_opcao > 4) {
-                printf("Escolha uma opção válida\n\n");
-            } else {
-                // Sub-opção 1: Busca por ID único
-                if(sub_opcao == 1) {
-                    int buscar_id; 
-                    int encontrado = 0;
-
-                    printf("Digite a ID solicitada:\n");
-                    scanf("%d", &buscar_id);
-                    while((c = getchar()) != '\n' && c != EOF);
-                    printf("\n");
-
-                    Funcionario *aux = prim;
-
-                    while(aux != NULL) {
-                        if(buscar_id == aux->Num_registro) {
-                            encontrado = 1;
-
-                            printf("=== Funcionário Encontrado ===\n\n");
-                            printf("Número de registro: %d\n", aux->Num_registro);
-                            printf("Funcionário: %s\n", aux->Nome);
-                            printf("Função: %s\n", aux->Funcao);
-                            printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
-                            printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
-
-                            break; 
-                        }
-                        aux = aux->prox;
-                    }
-
-                    if(encontrado == 0) {
-                        printf("Erro: Nenhum funcionário encontrado com a ID %d.\n\n", buscar_id);
-                    }
-
-                    printf("Pressione [Enter] para voltar ao Menu Principal...");
-                    getchar();
-                    printf("\n\n");
+                printf("Escolha uma opção:\n\n");
+                
+                // Blindagem contra letras no sub-menu
+                if (scanf("%d", &sub_opcao) != 1) {
+                    while ((c = getchar()) != '\n' && c != EOF);
+                    sub_opcao = -1;
+                } else {
+                    while ((c = getchar()) != '\n' && c != EOF);
                 }
-                // Sub-opção 2: Ver todos os registros
-                else if(sub_opcao == 2) {
-                    if(prim == NULL) {
-                        printf("Nenhum funcionário cadastrado!\n\n");
-                    } else {
+                printf("\n");
+
+                // Validação de segurança para o sub-menu (incluindo o 0 para voltar)
+                if (sub_opcao == 0) {
+                    printf("Retornando ao Menu Principal...\n\n");
+                    break;
+                } else if(sub_opcao < 1 || sub_opcao > 4) {
+                    printf("Escolha uma opção válida\n\n");
+                } else {
+                    // Sub-opção 1: Busca por ID único
+                    if(sub_opcao == 1) {
+                        int buscar_id; 
+                        int encontrado = 0;
+
+                        printf("Digite a ID solicitada:\n");
+                        scanf("%d", &buscar_id);
+                        while((c = getchar()) != '\n' && c != EOF);
+                        printf("\n");
+
                         Funcionario *aux = prim;
 
                         while(aux != NULL) {
-                            printf("Número de registro: %d\n", aux->Num_registro);
-                            printf("Funcionário: %s\n", aux->Nome);
-                            printf("Função: %s\n", aux->Funcao);    
-                            printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
-                            printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
+                            if(buscar_id == aux->Num_registro) {
+                                encontrado = 1;
 
+                                printf("=== Funcionário Encontrado ===\n\n");
+                                printf("Número de registro: %d\n", aux->Num_registro);
+                                printf("Funcionário: %s\n", aux->Nome);
+                                printf("Função: %s\n", aux->Funcao);
+                                printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
+                                printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
+
+                                break; 
+                            }
                             aux = aux->prox;
                         }
-                    }
 
-                    printf("Pressione [Enter] para voltar ao Menu Principal...");
-                    getchar();
-                    printf("\n\n");
-                }
-                // Sub-opção 3: Atualizar um registro
-                else if(sub_opcao == 3) {
-                    if(prim == NULL) {
-                        printf("Erro: Nenhum funcionário cadastrado para atualizar!\n\n");
-                        printf("Pressione [Enter] para voltar ao Menu Principal...");
+                        if(encontrado == 0) {
+                            printf("Erro: Nenhum funcionário encontrado com a ID %d.\n\n", buscar_id);
+                        }
+
+                        printf("Pressione [Enter] para continuar...");
                         getchar();
                         printf("\n\n");
-                    } else {
-                        int continuar_atualizar;
-                        do {
-                            int buscar_id;
-                            int encontrado = 0;
-
-                            printf("=========================================\n");
-                            printf("          ATUALIZAR REGISTRO             \n");
-                            printf("=========================================\n\n");
-
-                            printf("Digite a ID do funcionário que deseja atualizar:\n");
-                            scanf("%d", &buscar_id);
-                            while((c = getchar()) != '\n' && c != EOF);
-                            printf("\n");
-
+                    }
+                    // Sub-opção 2: Ver todos os registros
+                    else if(sub_opcao == 2) {
+                        if(prim == NULL) {
+                            printf("Nenhum funcionário cadastrado!\n\n");
+                        } else {
                             Funcionario *aux = prim;
+
                             while(aux != NULL) {
-                                if(aux->Num_registro == buscar_id) {
-                                    encontrado = 1;
+                                printf("Número de registro: %d\n", aux->Num_registro);
+                                printf("Funcionário: %s\n", aux->Nome);
+                                printf("Função: %s\n", aux->Funcao);    
+                                printf("Piso salarial: R$ %.2f\n", aux->Piso_salarial);
+                                printf("Contatos: %s, %s\n\n", aux->Celular, aux->E_mail);
 
-                                    printf("=== Funcionário Encontrado ===\n");
-                                    printf("Nome atual: %s\n", aux->Nome);
-                                    printf("Função atual: %s\n\n", aux->Funcao);
-
-                                    printf("Digite o novo nome:\n");
-                                    scanf(" %49[^\n]", aux->Nome);
-                                    printf("\n");
-
-                                    printf("Digite a nova função:\n");
-                                    scanf(" %49[^\n]", aux->Funcao);
-                                    printf("\n");
-
-                                    printf("Digite o novo número de celular:\n");
-                                    scanf(" %24[^\n]", aux->Celular);
-                                    printf("\n");
-
-                                    printf("Digite o novo E-mail:\n");
-                                    scanf(" %49[^\n]", aux->E_mail);
-                                    printf("\n");
-
-                                    printf("Digite o novo Piso salarial:\n");
-                                    scanf(" %f", &aux->Piso_salarial);
-                                    while((c = getchar()) != '\n' && c != EOF);
-                                    printf("\n");
-
-                                    printf("=== Dados atualizados com sucesso! ===\n\n");
-                                    break;
-                                }
                                 aux = aux->prox;
                             }
+                        }
 
-                            if(encontrado == 0) {
-                                printf("Erro: Nenhum funcionário encontrado com a ID %d.\n\n", buscar_id);
-                            }
-
-                            printf("Deseja atualizar outro registro?\n\n");
-                            printf("[1] - Sim\n");
-                            printf("[2] - Voltar ao Menu Principal\n\n");
-
-                            scanf("%d", &continuar_atualizar);
-                            while((c = getchar()) != '\n' && c != EOF);
-                            printf("\n");
-
-                        } while(continuar_atualizar == 1);
-                    }
-                }
-                // Sub-opção 4: Remover um registro
-                else if(sub_opcao == 4) {
-                    if(prim == NULL) {
-                        printf("Erro: Nenhum funcionário cadastrado para remover!\n\n");
-                        printf("Pressione [Enter] para voltar ao Menu Principal...");
+                        printf("Pressione [Enter] para continuar...");
                         getchar();
                         printf("\n\n");
-                    } else {
-                        int continuar_remover;
-                        do {
-                            int buscar_id;
+                    }
+                    // Sub-opção 3: Atualizar um registro
+                    else if(sub_opcao == 3) {
+                        if(prim == NULL) {
+                            printf("Erro: Nenhum funcionário cadastrado para atualizar!\n\n");
+                            printf("Pressione [Enter] para continuar...");
+                            getchar();
+                            printf("\n\n");
+                        } else {
+                            int continuar_atualizar;
+                            do {
+                                int buscar_id;
+                                int encontrado = 0;
 
-                            printf("=========================================\n");
-                            printf("          REMOVER REGISTRO               \n");
-                            printf("=========================================\n\n");
+                                printf("=========================================\n");
+                                printf("           ATUALIZAR REGISTRO            \n");
+                                printf("=========================================\n\n");
 
-                            printf("Digite a ID do funcionário que deseja remover:\n");
-                            scanf("%d", &buscar_id);
-                            while((c = getchar()) != '\n' && c != EOF);
-                            printf("\n");
+                                printf("Digite a ID do funcionário que deseja atualizar:\n");
+                                scanf("%d", &buscar_id);
+                                while((c = getchar()) != '\n' && c != EOF);
+                                printf("\n");
 
-                            // Chama a função de remoção segura com free()
-                            removerFuncionario(&prim, buscar_id);
+                                Funcionario *aux = prim;
+                                while(aux != NULL) {
+                                    if(aux->Num_registro == buscar_id) {
+                                        encontrado = 1;
 
-                            printf("Deseja remover outro registro?\n\n");
-                            printf("[1] - Sim\n");
-                            printf("[2] - Voltar ao Menu Principal\n\n");
+                                        printf("=== Funcionário Encontrado ===\n");
+                                        printf("Nome atual: %s\n", aux->Nome);
+                                        printf("Função atual: %s\n\n", aux->Funcao);
 
-                            scanf("%d", &continuar_remover);
-                            while((c = getchar()) != '\n' && c != EOF);
-                            printf("\n");
+                                        printf("Digite o novo nome:\n");
+                                        scanf(" %49[^\n]", aux->Nome);
+                                        printf("\n");
 
-                        } while(continuar_remover == 1);
+                                        printf("Digite a nova função:\n");
+                                        scanf(" %49[^\n]", aux->Funcao);
+                                        printf("\n");
+
+                                        printf("Digite o novo número de celular:\n");
+                                        scanf(" %24[^\n]", aux->Celular);
+                                        printf("\n");
+
+                                        printf("Digite o novo E-mail:\n");
+                                        scanf(" %49[^\n]", aux->E_mail);
+                                        printf("\n");
+
+                                        printf("Digite o novo Piso salarial:\n");
+                                        scanf(" %f", &aux->Piso_salarial);
+                                        while((c = getchar()) != '\n' && c != EOF);
+                                        printf("\n");
+
+                                        printf("=== Dados atualizados com sucesso! ===\n\n");
+                                        break;
+                                    }
+                                    aux = aux->prox;
+                                }
+
+                                if(encontrado == 0) {
+                                    printf("Erro: Nenhum funcionário encontrado com a ID %d.\n\n", buscar_id);
+                                }
+
+                                printf("Deseja atualizar outro registro?\n\n");
+                                printf("[1] - Sim\n");
+                                printf("[2] - Voltar ao Menu de Gestão\n\n");
+
+                                if (scanf("%d", &continuar_atualizar) != 1) {
+                                    while ((c = getchar()) != '\n' && c != EOF);
+                                    continuar_atualizar = -1;
+                                } else {
+                                    while ((c = getchar()) != '\n' && c != EOF);
+                                }
+                                printf("\n");
+
+                            } while(continuar_atualizar == 1);
+                        }
+                    }
+                    // Sub-opção 4: Remover um registro
+                    else if(sub_opcao == 4) {
+                        if(prim == NULL) {
+                            printf("Erro: Nenhum funcionário cadastrado para remover!\n\n");
+                            printf("Pressione [Enter] para continuar...");
+                            getchar();
+                            printf("\n\n");
+                        } else {
+                            int continuar_remover;
+                            do {
+                                int buscar_id;
+
+                                printf("=========================================\n");
+                                printf("            REMOVER REGISTRO             \n");
+                                printf("=========================================\n\n");
+
+                                printf("Digite a ID do funcionário que deseja remover:\n");
+                                scanf("%d", &buscar_id);
+                                while((c = getchar()) != '\n' && c != EOF);
+                                printf("\n");
+
+                                // Chama a função de remoção segura com free()
+                                removerFuncionario(&prim, buscar_id);
+
+                                printf("Deseja remover outro registro?\n\n");
+                                printf("[1] - Sim\n");
+                                printf("[2] - Voltar ao Menu de Gestão\n\n");
+
+                                if (scanf("%d", &continuar_remover) != 1) {
+                                    while ((c = getchar()) != '\n' && c != EOF);
+                                    continuar_remover = -1;
+                                } else {
+                                    while ((c = getchar()) != '\n' && c != EOF);
+                                }
+                                printf("\n");
+
+                            } while(continuar_remover == 1);
+                        }
                     }
                 }
-            }
+            } while (sub_opcao != 0);
+        }
+
+        // Opção 3: Folha de pagamento
+        if(opcao == 3) {
+            int sub_opcao;
+
+            do {
+                printf("\n==================================================\n");
+                printf("                FOLHA DE PAGAMENTO                \n");
+                printf("==================================================\n\n");
+
+                printf("  [1] Consultar Holerite Individual (Por ID)\n");
+                printf("  [2] Relatório Geral da Folha de Pagamento (RH)\n");
+                printf("  [3] Consultar Múltiplos IDs (RH)\n");
+                printf("  [0] Voltar ao Menu Principal\n\n");
+
+                if (scanf("%d", &sub_opcao) != 1) {
+                    while ((c = getchar()) != '\n' && c != EOF); // Limpeza de buffer de caracteres inválidos
+                    sub_opcao = -1;
+                } else {
+                    while ((c = getchar()) != '\n' && c != EOF); // Limpa o \n residual
+                }
+
+                switch (sub_opcao) {
+                    case 1:
+                        printf("\n--- CONSULTA DE HOLERITE INDIVIDUAL ---\n");
+                        // Próximo passo: percorrer a lista procurando o ID e calculando o salário
+                        break;
+
+                    case 2: 
+                        printf("\n--- RELATÓRIO GERAL DA FOLHA (RH) ---\n");
+                        // Próximo passo: varrer a lista encadeada exibindo todos os holerites
+                        break;   
+                    
+                    case 3: 
+                         printf("\n--- CONSULTA DE MÚLTIPLOS IDs (RH) ---\n");
+                        break;
+                        
+                    case 0:
+                        printf("\nRetornando ao Menu Principal...\n");
+                        break;
+
+                    default:
+                        printf("\nOpção inválida! Tente novamente.\n");
+                        break;    
+                }
+
+            } while (sub_opcao != 0);
+        }
+
+        // Opção 4: Encerrar programa
+        if(opcao == 4) {
+            printf("Encerrando o Sistema de RH. Até logo!\n\n");
         }
 
     } while(opcao != 4);
