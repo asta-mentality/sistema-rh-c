@@ -29,9 +29,9 @@ This project was engineered to demonstrate robust system-level concepts and mode
 ---
 ## 🔮 Roadmap & Future Enhancements
 
-1. **[ ] Implement file persistence (fopen, fprintf, fread) to save and restore state across system sessions.
-2. **[ ] Adapt the payroll engine for the Constitutional Amendment No. 141/2026 roadmap (gradual transition to 42-hour and 40-hour workweeks).
-3. **[ ] Object-Oriented refactoring and rewrite in Python with unit testing.
+- [ ] Implement file persistence (`fopen`, `fprintf`, `fread`) to save and restore state across system sessions.
+- [ ] Adapt the payroll engine for the **Constitutional Amendment No. 141/2026** roadmap (gradual transition to 42-hour and 40-hour workweeks).
+- [ ] Object-Oriented refactoring and rewrite in Python with unit testing.
 
 ---
 
